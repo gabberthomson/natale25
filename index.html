@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="background-photo" style="background-image: url('sfondo.jpg');"></div>
+
+        <div id="buttons-container">
+            <button class="color-button" id="btn-red" data-color="Rosso" style="background-color: red;"></button>
+            <button class="color-button" id="btn-green" data-color="Verde" style="background-color: green;"></button>
+            <button class="color-button" id="btn-blue" data-color="Blu" style="background-color: blue;"></button>
+        </div>
+
+        <div id="message-area">
+            <h1 id="pattern-display">Premi INIZIA</h1>
+            <p id="feedback-message">Sii pronto al Beep!</p>
+        </div>
+        <button id="start-button">INIZIA IL GIOCO</button>
+    </div>
+
+    <audio id="beep-sound" src="beep.mp3" preload="auto"></audio>
+    
+    <script src="script.js"></script>
+</body>
+</html>
