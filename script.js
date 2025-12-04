@@ -3,11 +3,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const photo = document.getElementById('background-photo');
     const patternDisplay = document.getElementById('pattern-display');
     const feedbackMessage = document.getElementById('feedback-message');
-    const startButton = document.getElementById('start-button');
-    const colorButtons = document.querySelectorAll('.color-button');
-    const beepSound = document.getElementById('beep-sound');
     
-    // VARIABILE PER IL COUNTDOWN SONORO
+    // Elementi di scelta iniziale RIMOSSI
+    // const choiceContainer = document.getElementById('choice-container');
+    // const choiceInput = document.getElementById('attempt-choice');
+    // const choiceButton = document.getElementById('choice-button');
+
+    // Pulsante di avvio effettivo del gioco 
+    const startGameButton = document.getElementById('start-game-button');
+
+    const colorButtons = document.querySelectorAll('.color-button');
+    
+    // Elementi Audio
+    const beepSound = document.getElementById('beep-sound');
+    const dingSound = document.getElementById('ding-sound');
+    const crashSound = document.getElementById('crash-sound');
+    const bellSound = document.getElementById('bell-sound'); 
+    
     let countdownInterval = null; 
 
     // Mappa per associare il colore all'ID del pulsante
@@ -19,18 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Variabili di Gioco
     const COLORS = ['Rosso', 'Verde', 'Blu'];
-    const MAX_ATTEMPTS = 5;             
     const MIN_WINS = 3;                 
     const WIN_KEY = "1520";             
     const FAIL_KEY = "2202";            
     
-    // Sequenza di tempi in millisecondi (per i 5 tentativi: 3.5s, 3.0s, 2.5s, 2.0s, 1.5s)
-    const TIME_LIMITS_MS = [3500, 3000, 2500, 2000, 1500]; 
+    // FISSATO A 5 ROUND
+    const MAX_ROUNDS = 5;           
+    
+    // Sequenza di tempi in millisecondi (3.5s, 3.0s, 2.5s, 2.0s, 1.5s, 1.0s)
+    const TIME_LIMITS_MS = [3500, 3000, 2500, 2000, 1500, 1000]; 
 
     let requiredPattern = [];
     let userAttempt = [];
     let gameActive = false;
-    let attemptsLeft = MAX_ATTEMPTS;
+    let roundsLeft = MAX_ROUNDS; // Inizializzato a 5
     let successCount = 0;               
 
     // ----------------------------------------------------
@@ -46,26 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     /** Tenta di sbloccare l'audio e la vibrazione la prima volta che si preme INIZIA */
     function unlockMedia() {
-        // 1. Sblocco Vibrazione (immediato)
         triggerHapticFeedback();
         
-        // 2. Sblocco Audio: prova a creare e riprodurre un nuovo elemento audio
         try {
-            const tempAudio = new Audio('beep.mp3');
-            tempAudio.volume = 0; 
-            
-            tempAudio.play().then(() => {
-                tempAudio.pause();
-                tempAudio.remove(); 
-                beepSound.load(); 
-            }).catch(e => {
-                // Fallback all'audio principale con volume basso per tentare lo sblocco
-                beepSound.volume = 0.05; 
-                beepSound.play().then(() => beepSound.pause()).catch(e => {});
-                beepSound.volume = 1; 
+            // Tenta lo sblocco per tutti gli audio necessari
+            [beepSound, dingSound, crashSound, bellSound].forEach(audio => {
+                const tempAudio = new Audio(audio.querySelector('source').src);
+                tempAudio.volume = 0;
+                tempAudio.play().then(() => {
+                    tempAudio.pause();
+                    tempAudio.remove();
+                    audio.load();
+                }).catch(e => {
+                     // console.warn("Sblocco audio fallito", e);
+                });
             });
         } catch (e) {
-             console.error("Errore costruttore Audio:", e);
+             console.error("Errore nello sblocco media:", e);
         }
     }
     
@@ -76,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalBeeps = 5;
         const totalIntervals = totalBeeps - 1; 
         
-        // Calcola l'intervallo esatto tra i beep
         const intervalDuration = limitMs / totalIntervals;
         
         let beepsLeft = totalBeeps;
@@ -90,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         countdownInterval = setInterval(() => {
             if (beepsLeft > 0 && gameActive) {
-                // Reset del tempo per garantire la riproduzione del beep
                 beepSound.currentTime = 0; 
                 beepSound.play().catch(e => {});
                 beepsLeft--;
@@ -111,8 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Applica e rimuove la classe 'flash' rapidamente al click del bottone E attiva la vibrazione */
     function flashInputButton(btn) {
         btn.classList.add('flash');
-        triggerHapticFeedback(); // Feedback tattile
-        // NESSUN BEEP QUI
+        triggerHapticFeedback(); 
         setTimeout(() => {
             btn.classList.remove('flash');
         }, 80); 
@@ -132,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return requiredPattern; 
     }
 
-    /** Mostra la sequenza luminosa dei pulsanti (DURATA MODIFICATA) */
+    /** Mostra la sequenza luminosa dei pulsanti (CON DING.MP3) */
     function flashPattern(patternArray) {
         let delay = 0;
         colorButtons.forEach(btn => btn.disabled = true);
@@ -143,7 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Aggiungi il flash (ON time: 800ms)
             setTimeout(() => {
                 btn.classList.add('flash');
-                // BEEP RIMOSSO: SOLO LUCE DURANTE LA SEQUENZA
+                // DING per la sequenza
+                dingSound.currentTime = 0;
+                dingSound.play().catch(e => {});
             }, delay);
             
             // 2. Rimuovi il flash 
@@ -160,25 +170,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return delay;
     }
 
-    /** Avvia il gioco dopo il click su INIZIA. */
+    /** Avvia il gioco dopo la scelta iniziale */
     function startGame() {
         unlockMedia(); 
 
-        if (attemptsLeft <= 0) {
+        if (roundsLeft <= 0) {
             checkEndState();
             return; 
         }
 
-        const currentAttemptIndex = MAX_ATTEMPTS - attemptsLeft;
+        const currentAttemptIndex = MAX_ROUNDS - roundsLeft;
         
-        // Determina il tempo limite corrente e lo converte in secondi per la transizione
-        const currentLimitMs = TIME_LIMITS_MS[currentAttemptIndex] || 1000;
+        // Determina il tempo limite corrente. 
+        const currentLimitMs = TIME_LIMITS_MS[currentAttemptIndex]; 
         const currentLimitSec = currentLimitMs / 1000;
 
-        startButton.style.display = 'none';
+        startGameButton.style.display = 'none';
         userAttempt = [];
         
-        feedbackMessage.textContent = `Tentativo ${currentAttemptIndex + 1} di ${MAX_ATTEMPTS}. Tempo: ${currentLimitSec}s. Concentrati!`;
+        // Nomenclatura aggiornata: ROUND
+        feedbackMessage.textContent = `Round ${currentAttemptIndex + 1} di ${MAX_ROUNDS}. Tempo: ${currentLimitSec}s. Concentrati!`;
         patternDisplay.textContent = 'Preparati...';
         
         setTimeout(() => {
@@ -188,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 gameActive = true;
                 
-                // Imposta la transizione CSS per il nuovo tempo e avvia la dissolvenza
                 photo.style.transitionDuration = `${currentLimitSec.toFixed(1)}s`; 
                 photo.style.opacity = '0'; 
                 
@@ -196,12 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 patternDisplay.textContent = 'AGISCI SUBITO!';
                 feedbackMessage.textContent = 'Vai!';
                 
-                startCountdownBeeps(currentLimitMs); // AVVIA I BEEP CADENZATI 
+                startCountdownBeeps(currentLimitMs); 
 
                 const gameTimeout = setTimeout(handleLoss, currentLimitMs); 
 
                 colorButtons.forEach(btn => btn.onclick = (e) => {
-                    flashInputButton(btn); // Solo flash e vibrazione
+                    flashInputButton(btn); 
                     
                     if (gameActive) {
                         handleInput(btn.dataset.color, gameTimeout);
@@ -224,44 +234,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleWin();
             }
         } else {
+            // ERRORE DI SEQUENZA -> Attiva il CRASH SOUND
+            crashSound.currentTime = 0;
+            crashSound.play().catch(e => {});
             clearTimeout(timeoutId);
             handleLoss(false); 
         }
     }
 
-    /** Gestisce il singolo successo (SILENTE) */
+    /** Gestisce il singolo successo (CON BELL.MP3) */
     function handleWin() {
         gameActive = false;
-        attemptsLeft--;
+        roundsLeft--; 
         successCount++;
         stopCountdownBeeps(); 
+        
+        // SUONO DI VITTORIA ROUND
+        bellSound.currentTime = 0;
+        bellSound.play().catch(e => {});
+        
         endAttemptCleanup();
     }
 
     /** Gestisce il singolo fallimento (SILENTE) */
     function handleLoss(isTimeout = true) {
         gameActive = false;
-        attemptsLeft--;
+        roundsLeft--; 
         stopCountdownBeeps(); 
+        
+        // Se è un timeout, riproduce il crash sound
+        if(isTimeout) {
+            crashSound.currentTime = 0;
+            crashSound.play().catch(e => {});
+        }
+        
         endAttemptCleanup();
     }
     
-    /** Logica eseguita alla fine di ogni tentativo */
+    /** Logica eseguita alla fine di ogni round */
     function endAttemptCleanup() {
         colorButtons.forEach(btn => btn.onclick = null);
         colorButtons.forEach(btn => btn.disabled = true);
 
         patternDisplay.textContent = 'Risultato registrato.';
-        feedbackMessage.textContent = `Tentativi completati: ${MAX_ATTEMPTS - attemptsLeft}/${MAX_ATTEMPTS}.`;
+        // Nomenclatura aggiornata: ROUND
+        feedbackMessage.textContent = `Round completati: ${MAX_ROUNDS - roundsLeft}/${MAX_ROUNDS}.`;
         
-        if (attemptsLeft <= 0) {
+        if (roundsLeft <= 0) {
             setTimeout(checkEndState, 2000); 
         } else {
             setTimeout(() => {
                 photo.style.transitionDuration = '1.0s'; 
                 photo.style.opacity = '1'; 
-                startButton.style.display = 'block';
-                patternDisplay.textContent = 'Premi INIZIA';
+                startGameButton.style.display = 'block';
+                patternDisplay.textContent = 'Premi INIZIA GIOCO';
                 colorButtons.forEach(btn => btn.disabled = false); 
             }, 2000); 
         }
@@ -270,10 +296,10 @@ document.addEventListener('DOMContentLoaded', () => {
         userAttempt = [];
     }
     
-    /** Controlla il risultato finale dopo 5 tentativi */
+    /** Controlla il risultato finale dopo i round */
     function checkEndState() {
         photo.style.opacity = '1'; 
-        startButton.style.display = 'none';
+        startGameButton.style.display = 'none';
 
         if (successCount >= MIN_WINS) {
             patternDisplay.textContent = WIN_KEY; 
@@ -281,18 +307,21 @@ document.addEventListener('DOMContentLoaded', () => {
             patternDisplay.textContent = FAIL_KEY;
         }
         
-        feedbackMessage.textContent = 'Questo è il codice. Buona fortuna.'; 
+        feedbackMessage.textContent = `Questo è il codice. Hai ottenuto ${successCount} sequenze corrette. Buona fortuna.`; 
         
         colorButtons.forEach(btn => btn.disabled = true);
     }
 
     // ----------------------------------------------------
-    // INIZIALIZZAZIONE
+    // INIZIALIZZAZIONE 
     // ----------------------------------------------------
+    
+    // NESSUNA SCELTA INIZIALE: INIZIALIZZAZIONE DIRETTA A 5 ROUND
+    
+    // Listener per avviare il gioco effettivo
+    startGameButton.addEventListener('click', startGame);
 
-    feedbackMessage.textContent = `Tentativi totali: ${MAX_ATTEMPTS}.`;
-    startButton.addEventListener('click', startGame);
-
+    // Gestione input mobile
     colorButtons.forEach(btn => {
         btn.addEventListener('touchstart', (e) => {
             e.preventDefault(); 

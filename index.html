@@ -1,28 +1,42 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon Says Criptato</title>
     <link rel="stylesheet" href="style.css">
+    
+    <audio id="beep-sound" preload="auto">
+        <source src="beep.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="ding-sound" preload="auto">
+        <source src="ding.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="crash-sound" preload="auto">
+        <source src="crash.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bell-sound" preload="auto">
+        <source src="bell.mp3" type="audio/mpeg">
+    </audio>
 </head>
 <body>
 
+    <div id="background-photo"></div>
+
     <div id="game-container">
-        <div id="background-photo" style="background-image: url('sfondo.jpg');"></div>
+        
+        <h1 id="pattern-display">Premi INIZIA GIOCO</h1>
+        <p id="feedback-message">Round totali: 5. Obiettivo: 3 successi.</p>
 
-        <div id="buttons-container">
-            <button class="color-button" id="btn-red" data-color="Rosso" style="background-color: red;"></button>
-            <button class="color-button" id="btn-green" data-color="Verde" style="background-color: green;"></button>
-            <button class="color-button" id="btn-blue" data-color="Blu" style="background-color: blue;"></button>
-        </div>
+        <button id="start-game-button">INIZIA GIOCO</button>
 
-        <div id="message-area">
-            <h1 id="pattern-display">Premi INIZIA</h1>
-            <p id="feedback-message">Sii pronto al Beep!</p>
+        <div id="color-buttons-container">
+            <button class="color-button" id="btn-red" data-color="Rosso"></button>
+            <button class="color-button" id="btn-green" data-color="Verde"></button>
+            <button class="color-button" id="btn-blue" data-color="Blu"></button>
         </div>
-        <button id="start-button">INIZIA IL GIOCO</button>
     </div>
 
-    <audio id="beep-sound" src="beep.mp3" preload="auto"></audio>
-    
     <script src="script.js"></script>
 </body>
 </html>
