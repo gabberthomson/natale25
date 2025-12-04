@@ -6,18 +6,10 @@
     <title>Simon Says Criptato</title>
     <link rel="stylesheet" href="style.css">
     
-    <audio id="beep-sound" preload="auto">
-        <source src="beep.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="ding-sound" preload="auto">
-        <source src="ding.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="crash-sound" preload="auto">
-        <source src="crash.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="bell-sound" preload="auto">
-        <source src="bell.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="beep-sound" preload="auto"><source src="beep.mp3" type="audio/mpeg"></audio>
+    <audio id="ding-sound" preload="auto"><source src="ding.mp3" type="audio/mpeg"></audio>
+    <audio id="crash-sound" preload="auto"><source src="crash.mp3" type="audio/mpeg"></audio>
+    <audio id="bell-sound" preload="auto"><source src="bell.mp3" type="audio/mpeg"></audio>
 </head>
 <body>
 
@@ -25,16 +17,17 @@
 
     <div id="game-container">
         
-        <h1 id="pattern-display">Premi INIZIA GIOCO</h1>
-        <p id="feedback-message">Round totali: 5. Obiettivo: 3 successi.</p>
-
-        <button id="start-game-button">INIZIA GIOCO</button>
-
         <div id="color-buttons-container">
             <button class="color-button" id="btn-red" data-color="Rosso"></button>
             <button class="color-button" id="btn-green" data-color="Verde"></button>
             <button class="color-button" id="btn-blue" data-color="Blu"></button>
         </div>
+
+        <h1 id="pattern-display">Premi INIZIA GIOCO</h1>
+        <p id="feedback-message">Round totali: 5</p>
+
+        <button id="start-game-button">INIZIA GIOCO</button>
+
     </div>
 
     <script src="script.js"></script>
